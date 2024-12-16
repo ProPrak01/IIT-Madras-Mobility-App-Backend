@@ -32,16 +32,14 @@ authRouter.post("/signup", async (req, res) => {
       return res.status(400).json({ msg: "Phone number is required" });
     }
 
-    const existingUser = await User.findOne({ number });
-    if (existingUser) {
-      return res.status(400).json({ msg: "User with this number already exists" });
-    }
+    // const existingUser = await User.findOne({ number });
+    // if (existingUser) {
+    //   return res.status(400).json({ msg: "User with this number already exists" });
+    // }
 
     const data = await sendOtp(number);
 
     if (data.Status === "Success") {
-      const user = new User({ number });
-      await user.save();
       return res.status(200).json({ msg: "OTP sent successfully", sessionId: data.Details });
     } else {
       throw new Error("Failed to send OTP");
@@ -65,7 +63,8 @@ authRouter.post("/signup/verify", async (req, res) => {
     if (data.Status === "Success" && data.Details === "OTP Matched") {
       const user = await User.findOne({ number });
       if (!user) {
-        return res.status(404).json({ msg: "User not found" });
+        const user = new User({ number });
+        await user.save();
       }
 
       const token = jwt.sign({ id: user._id }, jwtSecret);
