@@ -60,10 +60,10 @@ authRouter.post("/signup/verify", async (req, res) => {
     const data = await verifyOtp(number, otp);
 
     if (data.Status === "Success" && data.Details === "OTP Matched") {
-      const user = await User.findOne({ number });
+      let user = await User.findOne({ number });
       if (!user) {
-        const user = new User({ number ,name });
-        await user.save();
+        user = new User({ number ,name });
+        user = await user.save();
       }
 
       const token = jwt.sign({ id: user._id }, jwtSecret);
