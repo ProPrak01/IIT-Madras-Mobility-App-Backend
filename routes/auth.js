@@ -133,7 +133,7 @@ authRouter.post("/signin/verify", async (req, res) => {
 // Get all users
 authRouter.get("/users", async (req, res) => {
   try {
-    const users = await User.findAll();
+    const users = await User.find(); 
     res.status(200).json(users);
   } catch (err) {
     console.error("Get Users Error:", err.message);
