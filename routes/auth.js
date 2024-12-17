@@ -6,7 +6,7 @@ require("dotenv").config();
 
 const authRouter = express.Router();
 const apiKey = process.env.API_KEY;
-const jwtSecret = process.env.JWT_SECRET; // Use environment variable for JWT secret
+const jwtSecret = process.env.JWT_SECRET; 
 
 // Helper function to send OTP
 const sendOtp = async (number) => {
@@ -24,6 +24,10 @@ const verifyOtp = async (number, otp) => {
   return data;
 };
 
+authRouter.get("/", (req, res) => {
+  res.send("Hello from auth");
+});
+
 // Signup route
 authRouter.post("/signup", async (req, res) => {
   try {
@@ -31,11 +35,6 @@ authRouter.post("/signup", async (req, res) => {
     if (!number) {
       return res.status(400).json({ msg: "Phone number is required" });
     }
-
-    // const existingUser = await User.findOne({ number });
-    // if (existingUser) {
-    //   return res.status(400).json({ msg: "User with this number already exists" });
-    // }
 
     const data = await sendOtp(number);
 
@@ -53,7 +52,7 @@ authRouter.post("/signup", async (req, res) => {
 // Signup OTP verification route
 authRouter.post("/signup/verify", async (req, res) => {
   try {
-    const { otp, number } = req.body;
+    const { otp, number , name } = req.body;
     if (!otp || !number) {
       return res.status(400).json({ msg: "OTP and number are required" });
     }
@@ -63,7 +62,7 @@ authRouter.post("/signup/verify", async (req, res) => {
     if (data.Status === "Success" && data.Details === "OTP Matched") {
       const user = await User.findOne({ number });
       if (!user) {
-        const user = new User({ number });
+        const user = new User({ number ,name });
         await user.save();
       }
 
@@ -131,11 +130,15 @@ authRouter.post("/signin/verify", async (req, res) => {
   }
 });
 
-
-
-// authRouter.post("/signup", signUp);
-// authRouter.post("/signup/verify", signupVerify);
-// authRouter.post("/signin", signUp);
-// authRouter.post("/signin/verify", signupVerify);  
+// Get all users
+authRouter.get("/users", async (req, res) => {
+  try {
+    const users = await User.findAll();
+    res.status(200).json(users);
+  } catch (err) {
+    console.error("Get Users Error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 module.exports = authRouter;
