@@ -2,17 +2,14 @@ const express = require('express');
 const Trip = require('../models/trip'); // Assuming you have a Trip model
 const Monument = require('../models/monument'); // Assuming you have a Monument model
 const User = require('../models/user'); // Assuming you have a User model
+const JWTAuthenticator = require('../controllers/auth');
 
 const tripRouter = express.Router();
 
-tripRouter.post('/add', async (req, res) => {
+tripRouter.post('/add',JWTAuthenticator,async (req, res) => {
     try {
-        const { userId, monuments,purpose,mode} = req.body;
-
-        // Validate that userId and monuments are provided
-        if (!userId) {
-            return res.status(400).json({ message: 'User ID is required' });
-        }
+        const {monuments,purpose,mode} = req.body;
+        const userId = req.userId;
         if (!monuments || !Array.isArray(monuments) || monuments.length === 0) {
             return res.status(400).json({ message: 'At least one monument is required' });
         }
@@ -45,9 +42,9 @@ tripRouter.post('/add', async (req, res) => {
 });
 
 // Endpoint to fetch trip details of one user
-tripRouter.get('/user/:userId', async (req, res) => {
+tripRouter.get('/user',JWTAuthenticator,async (req, res) => {
     try {
-        const { userId } = req.params;
+        const userId = req.userId;
         const trips = await Trip.find({ userId });
         res.status(200).json(trips);
     } catch (error) {
