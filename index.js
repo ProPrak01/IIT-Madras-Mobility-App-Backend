@@ -26,6 +26,10 @@ mongoose
     console.log("Error in connecting DB", err);
   });
 
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`connected at port ${PORT}`);
-});
+if (process.env.NODE_ENV !== "production") {
+  app.listen(process.env.PORT || 3000, () => {
+    console.log(`Server is running on port ${process.env.PORT || 3000}`);
+  });
+}
+
+module.exports = app;
