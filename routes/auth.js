@@ -22,10 +22,13 @@ const sendOtp = async (number) => {
 
 // Helper function to verify OTP
 const verifyOtp = async (number, otp) => {
-  if(is_prod){const verifyUrl = `https://2factor.in/API/V1/${apiKey}/SMS/VERIFY3/+91${number}/${otp}`;
-  const response = await fetch(verifyUrl);
-  const data = await response.json();
-  return data;}
+  if(is_prod){
+    const verifyUrl = `https://2factor.in/API/V1/${apiKey}/SMS/VERIFY3/+91${number}/${otp}`;
+    const response = await fetch(verifyUrl);
+    const data = await response.json();
+    console.log(data)
+    return data;
+  }
   else{
     if(otp !== "123456") 
       return {Status:"Error",Details:"OTP Mismatch"};
@@ -46,7 +49,6 @@ authRouter.post("/login", async (req, res) => {
     }
 
     const data = await sendOtp(number);
-
     if (data.Status === "Success") {
       return res.status(200).json({ msg: "OTP sent successfully", sessionId: data.Details });
     } else {
