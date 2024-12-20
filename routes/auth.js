@@ -6,33 +6,39 @@ require("dotenv").config();
 
 const authRouter = express.Router();
 const apiKey = process.env.API_KEY;
-const jwtSecret = process.env.JWT_SECRET; 
-const is_prod = process.env.NODE_ENV === 'PRODUCTION';
+const jwtSecret = process.env.JWT_SECRET;
 
 // Helper function to send OTP
 const sendOtp = async (number) => {
-  if(is_prod){const otpUrl = `https://2factor.in/API/V1/${apiKey}/SMS/+91${number}/AUTOGEN`;
-  const response = await fetch(otpUrl);
-  const data = await response.json();
-  return data;}
-  else{
-    return {Message:"Application in development mode use development OTP"};
+  if (process.env.NODE_ENV === "production") {
+    const otpUrl = `https://2factor.in/API/V1/${apiKey}/SMS/+91${number}/AUTOGEN`;
+    const response = await fetch(otpUrl);
+    const data = await response.json();
+    return data;
+  } else {
+    // Development mode: simulate successful OTP send
+    return {
+      Status: "Success",
+      Details: "dev-session-123", // Fake session ID for development
+      Message: "Dev mode: Use 123456 as OTP",
+    };
   }
 };
 
 // Helper function to verify OTP
 const verifyOtp = async (number, otp) => {
-  if(is_prod){
+  if (process.env.NODE_ENV === "production") {
     const verifyUrl = `https://2factor.in/API/V1/${apiKey}/SMS/VERIFY3/+91${number}/${otp}`;
     const response = await fetch(verifyUrl);
     const data = await response.json();
-    console.log(data)
+    console.log(data);
     return data;
-  }
-  else{
-    if(otp !== "123456") 
-      return {Status:"Error",Details:"OTP Mismatch"};
-    return {Status:"Success",Details:"OTP Matched"};
+  } else {
+    // Development mode: accept only "123456" as valid OTP
+    return {
+      Status: otp === "123456" ? "Success" : "Error",
+      Details: otp === "123456" ? "OTP Matched" : "OTP Mismatch",
+    };
   }
 };
 
@@ -50,7 +56,9 @@ authRouter.post("/login", async (req, res) => {
 
     const data = await sendOtp(number);
     if (data.Status === "Success") {
-      return res.status(200).json({ msg: "OTP sent successfully", sessionId: data.Details });
+      return res
+        .status(200)
+        .json({ msg: "OTP sent successfully", sessionId: data.Details });
     } else {
       throw new Error("Failed to send OTP");
     }
@@ -63,7 +71,7 @@ authRouter.post("/login", async (req, res) => {
 // Signup OTP verification route
 authRouter.post("/login/verify", async (req, res) => {
   try {
-    const { otp, number , name } = req.body;
+    const { otp, number, name } = req.body;
     if (!otp || !number) {
       return res.status(400).json({ msg: "OTP and number are required" });
     }
@@ -73,7 +81,7 @@ authRouter.post("/login/verify", async (req, res) => {
     if (data.Status === "Success" && data.Details === "OTP Matched") {
       let user = await User.findOne({ number });
       if (!user) {
-        user = new User({ number ,name });
+        user = new User({ number, name });
         user = await user.save();
       }
 
@@ -91,7 +99,7 @@ authRouter.post("/login/verify", async (req, res) => {
 // Get all users
 authRouter.get("/users", async (req, res) => {
   try {
-    const users = await User.find(); 
+    const users = await User.find();
     res.status(200).json(users);
   } catch (err) {
     console.error("Get Users Error:", err.message);
